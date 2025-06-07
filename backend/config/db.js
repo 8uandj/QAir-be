@@ -1,9 +1,20 @@
-// backend/config/db.js
+// config/db.js
 const { Pool } = require('pg');
-require('dotenv').config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:1@localhost:5432/qairline',
+  user: 'postgres',      // Thay bằng user của bạn
+  host: 'localhost',
+  database: 'QAirline',   // Thay bằng tên database của bạn
+  password: 'H.231204', // Thay bằng mật khẩu
+  port: 5432,
 });
 
+pool.on('connect', () => {
+  console.log('✅ Đã kết nối thành công với cơ sở dữ liệu PostgreSQL!');
+});
+
+pool.on('error', (err) => {
+  console.error('❌ Lỗi kết nối cơ sở dữ liệu:', err.stack);
+});
+console.log('📊 Module db được export:', module.exports);
 module.exports = pool;

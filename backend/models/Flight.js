@@ -10,7 +10,10 @@ class Flight {
     flight_status,
     base_first_class_price,
     base_business_class_price,
-    base_economy_class_price
+    base_economy_class_price,
+    available_first_class_seats,
+    available_business_class_seats,
+    available_economy_class_seats
   }) {
     this.id = id;
     this.airline_id = airline_id;
@@ -23,6 +26,10 @@ class Flight {
     this.base_first_class_price = base_first_class_price;
     this.base_business_class_price = base_business_class_price;
     this.base_economy_class_price = base_economy_class_price;
+    this.available_first_class_seats = available_first_class_seats;
+    this.available_business_class_seats = available_business_class_seats;
+    this.available_economy_class_seats = available_economy_class_seats;
   }
 }
+
 module.exports = Flight;
