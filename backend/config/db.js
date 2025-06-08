@@ -4,8 +4,8 @@ const { Pool } = require('pg');
 const pool = new Pool({
   user: 'postgres',      // Thay bằng user của bạn
   host: 'localhost',
-  database: 'QAirline',   // Thay bằng tên database của bạn
-  password: 'H.231204', // Thay bằng mật khẩu
+  database: 'qairline',   // Thay bằng tên database của bạn
+  password: 'postgres', // Thay bằng mật khẩu
   port: 5432,
 });
 

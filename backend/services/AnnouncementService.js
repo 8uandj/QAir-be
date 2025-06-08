@@ -9,91 +9,91 @@ class AnnouncementService {
    * @returns {Promise<Object>} - { data: [], total: number }
    */
   async getAnnouncements(options = {}) {
-  const {
-    page = 1,
-    limit = 10,
-    status,
-    type,
-    titleKeyword,
-    startDate,
-    endDate
-  } = options;
-  const offset = (page - 1) * limit;
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      type,
+      titleKeyword,
+      startDate,
+      endDate
+    } = options;
+    const offset = (page - 1) * limit;
 
-  let query = `
-    SELECT id, title, content, type, status, start_date, end_date, priority, created_at, updated_at
-    FROM announcements
-    WHERE (end_date IS NULL OR end_date > NOW())
-  `;
+    let query = `
+      SELECT id, title, content, type, status, start_date, end_date, priority, created_at, updated_at
+      FROM announcements
+      WHERE (end_date IS NULL OR end_date > NOW())
+    `;
 
-  let countQuery = ` 
-    SELECT COUNT(*)
-    FROM announcements
-    WHERE (end_date IS NULL OR end_date > NOW())
-  `;
+    let countQuery = ` 
+      SELECT COUNT(*)
+      FROM announcements
+      WHERE (end_date IS NULL OR end_date > NOW())
+    `;
 
-  const filterValues = [];
-  const countFilterValues = [];
-  let filterConditions = '';
-  let paramIndex = 1;
+    const filterValues = [];
+    const countFilterValues = [];
+    let filterConditions = '';
+    let paramIndex = 1;
 
-  if (status) {
-    filterConditions += ` AND status = $${paramIndex}`;
-    filterValues.push(status);
-    countFilterValues.push(status);
-    paramIndex++;
+    if (status) {
+      filterConditions += ` AND status = $${paramIndex}`;
+      filterValues.push(status);
+      countFilterValues.push(status);
+      paramIndex++;
+    }
+
+    if (type) {
+      filterConditions += ` AND type = $${paramIndex}`;
+      filterValues.push(type);
+      countFilterValues.push(type);
+      paramIndex++;
+    }
+
+    if (titleKeyword) {
+      filterConditions += ` AND title ILIKE $${paramIndex}`;
+      filterValues.push(`%${titleKeyword}%`);
+      countFilterValues.push(`%${titleKeyword}%`);
+      paramIndex++;
+    }
+
+    if (startDate) {
+      filterConditions += ` AND start_date >= $${paramIndex}`;
+      filterValues.push(startDate);
+      countFilterValues.push(startDate);
+      paramIndex++;
+    }
+
+    if (endDate) {
+      filterConditions += ` AND start_date <= $${paramIndex}`;
+      filterValues.push(endDate);
+      countFilterValues.push(endDate);
+      paramIndex++;
+    }
+
+    query += filterConditions;
+    countQuery += filterConditions;
+
+    query += `
+      ORDER BY start_date DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1};
+    `;
+    filterValues.push(limit);
+    filterValues.push(offset);
+
+    try {
+      const result = await db.query(query, filterValues);
+      const countResult = await db.query(countQuery, countFilterValues);
+      return {
+        data: result.rows,
+        total: parseInt(countResult.rows[0].count, 10)
+      };
+    } catch (error) {
+      console.error('❌ Error fetching announcements:', error.message);
+      throw new Error(`Could not fetch announcements: ${error.message}`);
+    }
   }
-
-  if (type) {
-    filterConditions += ` AND type = $${paramIndex}`;
-    filterValues.push(type);
-    countFilterValues.push(type);
-    paramIndex++;
-  }
-
-  if (titleKeyword) {
-    filterConditions += ` AND title ILIKE $${paramIndex}`;
-    filterValues.push(`%${titleKeyword}%`);
-    countFilterValues.push(`%${titleKeyword}%`);
-    paramIndex++;
-  }
-
-  if (startDate) {
-    filterConditions += ` AND start_date >= $${paramIndex}`;
-    filterValues.push(startDate);
-    countFilterValues.push(startDate);
-    paramIndex++;
-  }
-
-  if (endDate) {
-    filterConditions += ` AND start_date <= $${paramIndex}`;
-    filterValues.push(endDate);
-    countFilterValues.push(endDate);
-    paramIndex++;
-  }
-
-  query += filterConditions;
-  countQuery += filterConditions; // Bây giờ sẽ hoạt động vì countQuery là let
-
-  query += `
-    ORDER BY start_date DESC
-    LIMIT $${paramIndex} OFFSET $${paramIndex + 1};
-  `;
-  filterValues.push(limit);
-  filterValues.push(offset);
-
-  try {
-    const result = await db.query(query, filterValues);
-    const countResult = await db.query(countQuery, countFilterValues);
-    return {
-      data: result.rows,
-      total: parseInt(countResult.rows[0].count, 10)
-    };
-  } catch (error) {
-    console.error('❌ Error fetching announcements:', error.message);
-    throw new Error(`Could not fetch announcements: ${error.message}`);
-  }
-}
 
 
   /**
@@ -241,6 +241,25 @@ class AnnouncementService {
   // TODO: Add method to get announcements for a specific user (considering read status if implemented)
   // TODO: Add method to mark announcement as read for a user (if read status is implemented)
 
+  async getAnnouncementsByType(type) {
+    try {
+      console.log('Fetching announcements for type:', type);
+      const query = `
+        SELECT id, title, content, type, status, start_date, end_date, priority, created_at, updated_at
+        FROM announcements 
+        WHERE type = $1 
+        AND status = 'ACTIVE'
+        AND (end_date IS NULL OR end_date > CURRENT_TIMESTAMP)
+        ORDER BY priority DESC, created_at DESC
+      `;
+      const result = await db.query(query, [type]);
+      console.log('Query result:', result.rows);
+      return result.rows;
+    } catch (err) {
+      console.error('❌ Error fetching announcements by type:', err.message);
+      throw new Error(`Could not fetch announcements by type: ${err.message}`);
+    }
+  }
 }
 
 // Ensure exporting an instance

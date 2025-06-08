@@ -34,8 +34,8 @@ const TicketClassController = require('../controllers/ticketClassController');
 const AnnouncementController = require('../controllers/announcementController');
 const AircraftController = require('../controllers/aircraftController');
 const AirlineController = require('../controllers/airlineController');
-const RouteController = require('../controllers/RouteController');
-const AirportController = require('../controllers/AirportController');
+const RouteController = require('../controllers/routeController');
+const AirportController = require('../controllers/airportController');
 const StatisticController = require('../controllers/statisticController');
 const SeatController = require('../controllers/seatController');
 const CityController = require('../controllers/cityController');
@@ -162,8 +162,14 @@ router
   .get('/ticket-classes/:id/perks', validateGetPerks, handleValidationErrors, TicketClassController.getPerks);
 
 // Announcements
-router.get('/announcements', AnnouncementController.getAll);
-router.get('/announcements/:id', validateGetAnnouncementById, handleValidationErrors, AnnouncementController.getAnnouncementById); // Assuming validateGetAnnouncementById exists
+router.get('/announcements', (req, res, next) => {
+  if (req.query.type) {
+    AnnouncementController.getAnnouncementsByType(req, res, next);
+  } else {
+    AnnouncementController.getAll(req, res, next);
+  }
+});
+router.get('/announcements/:id', validateGetAnnouncementById, handleValidationErrors, AnnouncementController.getAnnouncementById);
 router.post('/announcements', authenticate, authorize(['admin']), validateCreateAnnouncement, handleValidationErrors, AnnouncementController.create);
 router.put('/announcements/:id', authenticate, authorize(['admin']), validateUpdateAnnouncement, handleValidationErrors, AnnouncementController.update);
 router.delete('/announcements/:id', authenticate, authorize(['admin']), validateDeleteAnnouncement, handleValidationErrors, AnnouncementController.delete);

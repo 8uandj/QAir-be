@@ -48,6 +48,34 @@ class AnnouncementController {
       throw err;
     }
   }
+
+  async getAnnouncementsByType(req, res) {
+    try {
+      const { type } = req.query;
+      console.log('Received request for type:', type);
+      
+      if (!type) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Type parameter is required' 
+        });
+      }
+
+      const result = await AnnouncementService.getAnnouncements({ type });
+      console.log('Found announcements:', result);
+      
+      res.json({ 
+        success: true, 
+        data: result.data 
+      });
+    } catch (err) {
+      console.error('❌ Error in getAnnouncementsByType:', err);
+      res.status(500).json({ 
+        success: false, 
+        message: err.message || 'Internal server error' 
+      });
+    }
+  }
 }
 
 module.exports = new AnnouncementController();
