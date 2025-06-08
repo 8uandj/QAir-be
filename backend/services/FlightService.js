@@ -25,6 +25,7 @@ class FlightService {
         f.available_business_class_seats,
         f.available_first_class_seats,
         a.name AS airline_name,
+        ac.aircraft_code,
         ac.aircraft_type,
         r.departure_airport_id,
         r.arrival_airport_id,
@@ -46,6 +47,7 @@ class FlightService {
       ORDER BY f.departure_time ASC;
     `;
     const flights = await db.query(query);
+    
     console.log('📊 Tổng số chuyến bay trước khi lọc:', flights.rows.length);
     console.log('📊 Danh sách chuyến bay trước khi lọc:', flights.rows.map(f => ({
       id: f.id,
@@ -70,7 +72,7 @@ class FlightService {
         first: flight.available_first_class_seats
       }
     }));
-
+    
     console.log('📊 Số chuyến bay sau khi lọc:', result.length);
     return result;
   } catch (error) {
@@ -123,12 +125,11 @@ class FlightService {
    * @param {Object} param0 - from_airport_id, to_airport_id, date (YYYY-MM-DD).
    * @returns {Promise<Array>} Danh sách chuyến bay khớp.
    */
-  async searchFlights({ from_airport_id, to_airport_id, date }) {
+async searchFlights({ legs, flight_id, flight_number }) {
   try {
-    const query = `
+    let query = `
       SELECT
         f.id,
-        f.flight_number,
         a.name AS airline_name,
         ac.aircraft_type,
         f.departure_time,
@@ -140,7 +141,10 @@ class FlightService {
         f.base_business_class_price,
         f.base_first_class_price,
         cd.name AS departure_city_name,
-        ca.name AS arrival_city_name
+        ca.name AS arrival_city_name,
+        r.departure_airport_id,
+        r.arrival_airport_id,
+        f.flight_number
       FROM flights f
       JOIN routes r ON f.route_id = r.id
       JOIN airlines a ON f.airline_id = a.id
@@ -149,18 +153,39 @@ class FlightService {
       JOIN airports ar ON r.arrival_airport_id = ar.id
       LEFT JOIN cities cd ON d.city_id = cd.id
       LEFT JOIN cities ca ON ar.city_id = ca.id
-      WHERE r.departure_airport_id = $1
-        AND r.arrival_airport_id = $2
-        AND DATE(f.departure_time) = $3
-        AND f.flight_status != 'Cancelled'
-      ORDER BY f.departure_time ASC;
+      WHERE f.flight_status != 'Cancelled'
     `;
-    
-    const result = await db.query(query, [from_airport_id, to_airport_id, date]);
-    
-    return result.rows.map(row => ({
+    const params = [];
+
+    console.log('📊 Service received params:', { legs, flight_id, flight_number });
+
+    if (flight_number) {
+      query += ` AND f.flight_number = $${params.length + 1}`;
+      params.push(flight_number.trim());
+    } else if (flight_id) {
+      query += ` AND f.id = $${params.length + 1}`;
+      params.push(flight_id);
+    } else if (legs && Array.isArray(legs) && legs.length > 0 && legs[0]) {
+      const { from_airport_id, to_airport_id, date } = legs[0];
+      if (!from_airport_id || !to_airport_id || !date) {
+        throw new Error('Thiếu tham số trong legs: from_airport_id, to_airport_id, date');
+      }
+      query += ` AND r.departure_airport_id = $${params.length + 1}`;
+      params.push(from_airport_id);
+      query += ` AND r.arrival_airport_id = $${params.length + 1}`;
+      params.push(to_airport_id);
+      query += ` AND DATE(f.departure_time) = $${params.length + 1}`;
+      params.push(date);
+    } else {
+      throw new Error('Yêu cầu tìm kiếm không hợp lệ: Cần cung cấp legs, flight_id, hoặc flight_number');
+    }
+
+    query += ` ORDER BY f.departure_time ASC`;
+
+    console.log('📊 Search flights query:', query, 'params:', params);
+    const result = await db.query(query, params);
+    const flights = result.rows.map(row => ({
       id: row.id,
-      flight_number: row.flight_number,
       airline_name: row.airline_name,
       aircraft_type: row.aircraft_type,
       departure_time: row.departure_time,
@@ -172,10 +197,16 @@ class FlightService {
       base_business_class_price: row.base_business_class_price,
       base_first_class_price: row.base_first_class_price,
       departure_city_name: row.departure_city_name,
-      arrival_city_name: row.arrival_city_name
+      arrival_city_name: row.arrival_city_name,
+      departure_airport_id: row.departure_airport_id,
+      arrival_airport_id: row.arrival_airport_id,
+      flight_number: row.flight_number
     }));
+
+    console.log('📊 Search flights result:', flights);
+    return flights;
   } catch (error) {
-    console.error('❌ Error searching flights:', error.message);
+    console.error('❌ Error searching flights:', error.message, error.stack);
     throw new Error(`Không thể tìm kiếm chuyến bay: ${error.message}`);
   }
 }
@@ -222,33 +253,11 @@ class FlightService {
       const ticketsResult = await client.query(updateTicketsQuery, [newCancellationDeadline, flightId]);
       const updatedTickets = ticketsResult.rows.map(row => new Ticket(row));
 
-      // Tạo thông báo mới trong bảng announcements
-      const announcementQuery = `
-        INSERT INTO announcements (title, content, type, published_date, expiry_date, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *;
-      `;
-      const announcementTitle = `Flight ${updatedFlight.flight_number} Delayed`;
-      const announcementContent = `Flight ${updatedFlight.flight_number} has been delayed. New departure: ${newDeparture.toISOString()}, New arrival: ${newArrival.toISOString()}.`;
-      const announcementType = 'Delay';
-      const publishedDate = new Date();
-      const expiryDate = new Date(publishedDate.getTime() + 24 * 60 * 60 * 1000); // Hết hạn sau 24 giờ
-      const announcementResult = await client.query(announcementQuery, [
-        announcementTitle,
-        announcementContent,
-        announcementType,
-        publishedDate,
-        expiryDate,
-        createdBy
-      ]);
-      const newAnnouncement = new Announcement(announcementResult.rows[0]);
-
       await client.query('COMMIT');
 
       return {
         updatedFlight,
         updatedTickets,
-        newAnnouncement
       };
     } catch (error) {
       await client.query('ROLLBACK');

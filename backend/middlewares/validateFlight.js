@@ -2,17 +2,38 @@ const { body, param } = require('express-validator');
 
 exports.validateSearchFlights = [
   body('legs')
+    .optional()
     .isArray({ min: 1 })
-    .withMessage('Danh sách legs phải là một mảng không rỗng'),
+    .withMessage('Danh sách legs phải là một mảng không rỗng nếu được cung cấp'),
   body('legs.*.from_airport_id')
+    .if(body('legs').exists())
     .isUUID()
     .withMessage('ID sân bay đi không hợp lệ'),
   body('legs.*.to_airport_id')
+    .if(body('legs').exists())
     .isUUID()
     .withMessage('ID sân bay đến không hợp lệ'),
   body('legs.*.date')
-    .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .withMessage('Ngày phải có định dạng YYYY-MM-DD')
+    .if(body('legs').exists())
+    .isISO8601()
+    .toDate()
+    .withMessage('Ngày không hợp lệ (phải theo định dạng YYYY-MM-DD)'),
+  body('flight_id')
+    .optional()
+    .isUUID()
+    .withMessage('ID chuyến bay không hợp lệ'),
+  body('flight_number')
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Số hiệu chuyến bay phải là chuỗi không rỗng'),
+  body().custom((value) => {
+    if (!value.legs && !value.flight_id && !value.flight_number) {
+      throw new Error('Phải cung cấp ít nhất một trong các tham số: legs, flight_id, hoặc flight_number');
+    }
+    return true;
+  }),
 ];
 
 exports.validateDelayFlight = [

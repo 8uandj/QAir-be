@@ -1,13 +1,12 @@
-require('dotenv').config(); // Load biến môi trường từ .env
-
+// config/db.js
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432,
+  user: 'postgres',      // Thay bằng user của bạn
+  host: 'localhost',
+  database: 'QAirline',   // Thay bằng tên database của bạn
+  password: 'H.231204', // Thay bằng mật khẩu
+  port: 5432,
 });
 
 pool.on('connect', () => {
@@ -17,5 +16,5 @@ pool.on('connect', () => {
 pool.on('error', (err) => {
   console.error('❌ Lỗi kết nối cơ sở dữ liệu:', err.stack);
 });
-
+console.log('📊 Module db được export:', module.exports);
 module.exports = pool;

@@ -15,22 +15,15 @@ exports.getFlightById = async (req, res) => {
 };
 
 exports.searchFlights = async (req, res) => {
-  const { legs } = req.body;
-  console.log('📝 Request body:', req.body);
-
-  if (!Array.isArray(legs) || legs.length === 0)
-    return res.status(400).json({ success: false, message: 'legs must be a non-empty array' });
+  const { legs, flight_id, flight_number } = req.body;
 
   try {
-    const results = await Promise.all(legs.map(leg => flightService.searchFlights(leg)));
-    console.log('📝 Search results before flat:', results);
-    const flattenedResults = results.flat();
-    console.log('📝 Flattened results:', flattenedResults);
-    
+    console.log('📊 Controller received body:', req.body);
+    const results = await flightService.searchFlights({ legs, flight_id, flight_number });
     res.set('Cache-Control', 'no-store');
-    res.json({ success: true, data: flattenedResults });
+    res.json({ success: true, data: results });
   } catch (error) {
-    console.error('❌ Error searching flights:', error);
+    console.error('🚨 Controller error:', error.message, error.stack);
     res.status(500).json({ success: false, message: error.message });
   }
 };

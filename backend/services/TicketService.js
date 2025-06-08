@@ -43,7 +43,7 @@ class TicketService {
       a2.name AS arrival_airport,
       c.first_name, c.last_name, c.email, c.phone_number, c.identity_number
     FROM tickets t
-    JOIN ticket_codes tc ON t.id = tc.ticket_id
+    JOIN ticket_codes tc ON t.ticket_code = tc.ticket_code
     JOIN customers c ON t.customer_id = c.id
     JOIN flights f ON t.flight_id = f.id
     JOIN airlines a ON f.airline_id = a.id
