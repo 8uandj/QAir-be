@@ -8,17 +8,9 @@ const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 const helmet    = require('helmet');
 const router    = require('./routes/routes');
-
+import { Pool } from './config/db';
 const app = express();
 
-// Thiết lập kết nối PostgreSQL
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432
-});
 
 // Kiểm tra kết nối database và thêm log
 pool.connect((err, client, release) => {
@@ -67,3 +59,15 @@ app.use((err, req, res, next) => {
 /* ----------  Khởi động server ---------- */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server chạy trên cổng ${PORT}`));
+
+// index.js
+app.get('/test-db', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ success: true, time: result.rows[0].now });
+  } catch (err) {
+    console.error('Database connection error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
