@@ -25,9 +25,15 @@ app.use(cors(corsOptions));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 400,
-  message: { success: false, message: 'Quá nhiều yêu cầu, vui lòng thử lại sau' }
+  windowMs: 1 * 60 * 1000, // 1 phút
+  max: 300, // 300 request mỗi phút
+  message: { 
+    success: false, 
+    message: 'Quá nhiều yêu cầu, vui lòng thử lại sau 1 phút',
+    error: 'TOO_MANY_REQUESTS'
+  },
+  standardHeaders: true, // Trả về RateLimit-* headers
+  legacyHeaders: false, // Không trả về X-RateLimit-* headers
 }));
 
 /* ---------- Router ---------- */
