@@ -1,39 +1,22 @@
-// backend/index.js
-require('dotenv').config();          //Load .env trước mọi thứ
+require('dotenv').config(); // Load .env trước mọi thứ
 
-const express   = require('express');
-const cors      = require('cors');
-const morgan    = require('morgan');
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const { Pool } = require('pg');
-const helmet    = require('helmet');
-const router    = require('./routes/routes');
+const helmet = require('helmet');
+const router = require('./routes/routes');
+const pool = require('./config/db'); // Import pool từ db.js
 
 const app = express();
 
-// Thiết lập kết nối PostgreSQL
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432
-});
-
-// Kiểm tra kết nối database và thêm log
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Lỗi kết nối PostgreSQL:', err.stack);
-    process.exit(1); // Thoát ứng dụng nếu kết nối thất bại
-  }
-  console.log('✅ Đã kết nối thành công với cơ sở dữ liệu PostgreSQL!');
-  release();
-});
-
-/* ----------  Middleware toàn cục ---------- */
-app.use(helmet());                   // Thêm bảo mật HTTP header
+/* ---------- Middleware toàn cục ---------- */
+app.use(helmet()); // Thêm bảo mật HTTP header
 const corsOptions = {
-  origin: 'http://localhost:3001', // Cho phép origin từ frontend
+  origin: [
+    'http://localhost:3001',
+    'https://3001-firebase-qairlinefe-1749302147061.cluster-zumahodzirciuujpqvsniawo3o.cloudworkstations.dev'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Các phương thức được phép
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'x-user-id'], // Cho phép các header
   credentials: true // Nếu cần gửi cookie hoặc thông tin xác thực
@@ -53,15 +36,15 @@ app.use(rateLimit({
   legacyHeaders: false, // Không trả về X-RateLimit-* headers
 }));
 
-/* ----------  Router ---------- */
+/* ---------- Router ---------- */
 app.use('/api', router);
 
-/* ----------  404 Not Found ---------- */
+/* ---------- 404 Not Found ---------- */
 app.use((req, res, next) => {
   res.status(404).json({ success: false, message: 'Endpoint không tồn tại' });
 });
 
-/* ----------  Error Handler ---------- */
+/* ---------- Error Handler ---------- */
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.statusCode || 500).json({
@@ -70,6 +53,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* ----------  Khởi động server ---------- */
+/* ---------- Khởi động server ---------- */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server chạy trên cổng ${PORT}`));
