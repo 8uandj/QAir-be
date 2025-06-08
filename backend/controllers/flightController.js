@@ -16,13 +16,23 @@ exports.getFlightById = async (req, res) => {
 
 exports.searchFlights = async (req, res) => {
   const { legs } = req.body;
+  console.log('📝 Request body:', req.body);
 
   if (!Array.isArray(legs) || legs.length === 0)
     return res.status(400).json({ success: false, message: 'legs must be a non-empty array' });
 
-  const results = await flightService.searchFlights(legs);
-  res.set('Cache-Control', 'no-store');
-  res.json({ success: true, data: results });
+  try {
+    const results = await Promise.all(legs.map(leg => flightService.searchFlights(leg)));
+    console.log('📝 Search results before flat:', results);
+    const flattenedResults = results.flat();
+    console.log('📝 Flattened results:', flattenedResults);
+    
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: flattenedResults });
+  } catch (error) {
+    console.error('❌ Error searching flights:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 exports.delayFlight = async (req, res) => {

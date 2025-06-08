@@ -11,9 +11,8 @@ exports.validateSearchFlights = [
     .isUUID()
     .withMessage('ID sân bay đến không hợp lệ'),
   body('legs.*.date')
-    .isISO8601()
-    .toDate()
-    .withMessage('Ngày không hợp lệ')
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .withMessage('Ngày phải có định dạng YYYY-MM-DD')
 ];
 
 exports.validateDelayFlight = [

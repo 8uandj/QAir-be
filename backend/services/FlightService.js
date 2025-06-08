@@ -117,6 +117,7 @@ class FlightService {
     const query = `
       SELECT
         f.id,
+        f.flight_number,
         a.name AS airline_name,
         ac.aircraft_type,
         f.departure_time,
@@ -143,9 +144,12 @@ class FlightService {
         AND f.flight_status != 'Cancelled'
       ORDER BY f.departure_time ASC;
     `;
+    
     const result = await db.query(query, [from_airport_id, to_airport_id, date]);
+    
     return result.rows.map(row => ({
       id: row.id,
+      flight_number: row.flight_number,
       airline_name: row.airline_name,
       aircraft_type: row.aircraft_type,
       departure_time: row.departure_time,
