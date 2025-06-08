@@ -5,10 +5,9 @@ const express   = require('express');
 const cors      = require('cors');
 const morgan    = require('morgan');
 const rateLimit = require('express-rate-limit');
-const { Pool } = require('pg');
 const helmet    = require('helmet');
 const router    = require('./routes/routes');
-import { Pool } from './config/db';
+const pool = require('./config/db'); // Import Pool từ db.js
 const app = express();
 
 
