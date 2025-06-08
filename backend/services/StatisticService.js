@@ -1,4 +1,3 @@
-
 const db = require('../config/db');
 
 class StatisticService {
@@ -75,9 +74,9 @@ class StatisticService {
     const query = `
       SELECT 
         DATE(booking_date) AS date,
-        COUNT(*)           AS bookings
+        COUNT(*) AS bookings
       FROM tickets
-      WHERE booking_date >= NOW() - INTERVAL '$1 days'
+      WHERE booking_date >= CURRENT_DATE - INTERVAL '1 day' * $1
       GROUP BY DATE(booking_date)
       ORDER BY DATE(booking_date);`;
     const { rows } = await db.query(query, [days]);

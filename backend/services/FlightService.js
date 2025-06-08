@@ -47,6 +47,17 @@ class FlightService {
       ORDER BY f.departure_time ASC;
     `;
     const flights = await db.query(query);
+    console.log('📊 Tổng số chuyến bay trước khi lọc:', flights.rows.length);
+    console.log('📊 Danh sách chuyến bay trước khi lọc:', flights.rows.map(f => ({
+      id: f.id,
+      flight_number: f.flight_number,
+      status: f.flight_status,
+      available_seats: {
+        economy: f.available_economy_class_seats,
+        business: f.available_business_class_seats,
+        first: f.available_first_class_seats
+      }
+    })));
 
     const result = flights.rows.filter(flight => 
       flight.available_economy_class_seats > 0 || 
@@ -61,6 +72,7 @@ class FlightService {
       }
     }));
 
+    console.log('📊 Số chuyến bay sau khi lọc:', result.length);
     return result;
   } catch (error) {
     console.error('❌ Error fetching flights:', error.message);
