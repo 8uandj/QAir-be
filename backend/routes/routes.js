@@ -123,7 +123,8 @@ router
   .post('/tickets/:id/confirm', authenticate, authorize(['customer']), validateTicketParams, handleValidationErrors, TicketController.confirmTicket)
   .get('/tickets/code/:code', validateTicketCode, handleValidationErrors, TicketController.getTicketByCode)
   .get('/tickets/email/:email', authenticate, authorize(['customer']), validateGetTicketsByEmail, handleValidationErrors, TicketController.getTicketsByEmail)
-  .post('/tickets/book-with-customer', validateBookMultipleTickets, handleValidationErrors, TicketController.bookTicketWithCustomer);
+  .post('/tickets/book-with-customer', validateBookMultipleTickets, handleValidationErrors, TicketController.bookTicketWithCustomer)
+  .get('/admin/tickets', TicketController.getAllTicketsForAdmin);
 // -----------------------------------------------------------------------------
 // ADMIN ROUTES
 // -----------------------------------------------------------------------------

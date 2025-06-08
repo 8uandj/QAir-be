@@ -15,7 +15,7 @@ app.use(helmet()); // Thêm bảo mật HTTP header
 const corsOptions = {
   origin: [
     'http://localhost:3001',
-    'https://3001-firebase-qairlinefe-1749302147061.cluster-zumahodzirciuujpqvsniawo3o.cloudworkstations.dev'
+    'https://3000-firebase-qairlinefe-1749302147061.cluster-zumahodzirciuujpqvsniawo3o.cloudworkstations.dev'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Các phương thức được phép
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'x-user-id'], // Cho phép các header

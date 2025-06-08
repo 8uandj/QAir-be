@@ -31,6 +31,75 @@ class TicketService {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
+  async getAllTicketsForAdmin(filters = {}) {
+  let query = `
+    SELECT 
+      t.*, 
+      f.flight_number, f.departure_time, f.arrival_time, 
+      a.name AS airline_name, ac.aircraft_type,
+      r.departure_airport_id, r.arrival_airport_id,
+      d.name AS departure_airport,
+      a2.name AS arrival_airport,
+      c.first_name, c.last_name, c.email, c.phone_number, c.identity_number
+    FROM tickets t
+    JOIN customers c ON t.customer_id = c.id
+    JOIN flights f ON t.flight_id = f.id
+    JOIN airlines a ON f.airline_id = a.id
+    JOIN aircrafts ac ON f.aircraft_id = ac.id
+    JOIN routes r ON f.route_id = r.id
+    JOIN airports d ON r.departure_airport_id = d.id
+    JOIN airports a2 ON r.arrival_airport_id = a2.id
+    WHERE 1 = 1
+  `;
+
+  const values = [];
+  let idx = 1;
+
+  if (filters.flight_id) {
+    query += ` AND t.flight_id = $${idx++}`;
+    values.push(filters.flight_id);
+  }
+  if (filters.ticket_status) {
+    query += ` AND t.ticket_status = $${idx++}`;
+    values.push(filters.ticket_status);
+  }
+  if (filters.email) {
+    query += ` AND c.email ILIKE $${idx++}`;
+    values.push(`%${filters.email}%`);
+  }
+  if (filters.from_date) {
+    query += ` AND t.booking_date >= $${idx++}`;
+    values.push(filters.from_date);
+  }
+  if (filters.to_date) {
+    query += ` AND t.booking_date <= $${idx++}`;
+    values.push(filters.to_date);
+  }
+
+  query += ` ORDER BY t.booking_date DESC`;
+
+  const result = await db.query(query, values);
+  return result.rows.map(row => ({
+    ticket: new Ticket(row),
+    customer: {
+      full_name: `${row.first_name} ${row.last_name}`,
+      email: row.email,
+      phone: row.phone_number,
+      identity_number: row.identity_number
+    },
+    flight: {
+      flight_number: row.flight_number,
+      departure_time: row.departure_time,
+      arrival_time: row.arrival_time,
+      airline: row.airline_name,
+      aircraft_type: row.aircraft_type,
+      from: row.departure_airport,
+      to: row.arrival_airport
+    }
+  }));
+}
+
+
   /**
    * Book 1 vé đơn lẻ (hàm nội bộ, khoá chuyến bay & trừ ghế).
    * @param {Object} data

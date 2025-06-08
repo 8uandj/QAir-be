@@ -174,3 +174,13 @@ exports.getTicketStats = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+exports.getAllTicketsForAdmin = async (req, res) => {
+  try {
+    const tickets = await ticketService.getAllTicketsForAdmin(req.query);
+    res.status(200).json(tickets);
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy danh sách vé:', error.message);
+    res.status(500).json({ error: 'Lỗi máy chủ: ' + error.message });
+  }
+};
