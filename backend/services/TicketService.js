@@ -624,7 +624,7 @@ async bookMultipleTickets(data, user) {
         SUM(CASE WHEN ticket_status = 'Confirmed' THEN 1 ELSE 0 END) as confirmed_tickets,
         SUM(CASE WHEN ticket_status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled_tickets,
         SUM(CASE WHEN ticket_status = 'PendingPayment' THEN 1 ELSE 0 END) as pending_tickets,
-        SUM(price) as total_revenue
+        (SELECT COALESCE(SUM(price),0) FROM tickets WHERE ticket_status = 'Confirmed') AS total_revenue
       FROM tickets
       WHERE 1=1
     `;
