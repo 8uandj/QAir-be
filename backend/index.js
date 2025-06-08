@@ -24,7 +24,7 @@ pool.connect((err, client, release) => {
 /* ----------  Middleware toàn cục ---------- */
 app.use(helmet());                   // Thêm bảo mật HTTP header
 const corsOptions = {
-  origin: ['https://profound-eclair-8821f8.netlify.app', 'http://localhost:3001/'], // Cho phép origin từ frontend
+  origin: ['https://profound-eclair-8821f8.netlify.app', 'http://localhost:3001/', 'https://sunny-kringle-1afced.netlify.app/'], // Cho phép origin từ frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Các phương thức được phép
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'x-user-id'], // Cho phép các header
   credentials: true // Nếu cần gửi cookie hoặc thông tin xác thực
