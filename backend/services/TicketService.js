@@ -31,10 +31,11 @@ class TicketService {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
-  async getAllTicketsForAdmin(filters = {}) {
+ async getAllTicketsForAdmin(filters = {}) {
   let query = `
     SELECT 
       t.*, 
+      tc.standardized_code AS ticket_code,
       f.flight_number, f.departure_time, f.arrival_time, 
       a.name AS airline_name, ac.aircraft_type,
       r.departure_airport_id, r.arrival_airport_id,
@@ -42,6 +43,7 @@ class TicketService {
       a2.name AS arrival_airport,
       c.first_name, c.last_name, c.email, c.phone_number, c.identity_number
     FROM tickets t
+    JOIN ticket_codes tc ON t.id = tc.ticket_id
     JOIN customers c ON t.customer_id = c.id
     JOIN flights f ON t.flight_id = f.id
     JOIN airlines a ON f.airline_id = a.id
@@ -51,10 +53,14 @@ class TicketService {
     JOIN airports a2 ON r.arrival_airport_id = a2.id
     WHERE 1 = 1
   `;
-
   const values = [];
   let idx = 1;
 
+  if (filters.flight_number) {
+    query += ` AND f.flight_number = $${idx++}`;
+    values.push(filters.flight_number);
+  }
+  
   if (filters.flight_id) {
     query += ` AND t.flight_id = $${idx++}`;
     values.push(filters.flight_id);
@@ -80,7 +86,10 @@ class TicketService {
 
   const result = await db.query(query, values);
   return result.rows.map(row => ({
-    ticket: new Ticket(row),
+    ticket: {
+      ...new Ticket(row),
+      ticket_code: row.ticket_code
+    },
     customer: {
       full_name: `${row.first_name} ${row.last_name}`,
       email: row.email,

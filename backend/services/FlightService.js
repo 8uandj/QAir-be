@@ -25,7 +25,6 @@ class FlightService {
         f.available_business_class_seats,
         f.available_first_class_seats,
         a.name AS airline_name,
-        ac.aircraft_code,
         ac.aircraft_type,
         r.departure_airport_id,
         r.arrival_airport_id,
