@@ -23,12 +23,35 @@ pool.connect((err, client, release) => {
 
 /* ----------  Middleware toàn cục ---------- */
 app.use(helmet());                   // Thêm bảo mật HTTP header
+const cors = require('cors');
+
 const corsOptions = {
-  origin: ['https://profound-eclair-8821f8.netlify.app', 'http://localhost:3001', 'https://sunny-kringle-1afced.netlify.app'], // Cho phép origin từ frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Các phương thức được phép
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'x-user-id'], // Cho phép các header
-  credentials: true // Nếu cần gửi cookie hoặc thông tin xác thực
+  origin: (origin, callback) => {
+    // Cho phép các request không có origin (như từ Postman hoặc các client không phải browser)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Cho phép localhost cho môi trường phát triển
+    if (origin.includes('localhost')) {
+      return callback(null, true);
+    }
+
+    // Kiểm tra nếu origin kết thúc bằng .netlify.app
+    if (origin.endsWith('.netlify.app')) {
+      return callback(null, true);
+    }
+
+    // Từ chối các origin không khớp
+    return callback(new Error('Not allowed by CORS'), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'x-user-id'],
+  credentials: true
 };
+
+// Áp dụng CORS middleware
+app.use(cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(morgan('combined'));
 app.use(express.json());
