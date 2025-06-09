@@ -23,8 +23,6 @@ pool.connect((err, client, release) => {
 
 /* ----------  Middleware toàn cục ---------- */
 app.use(helmet());                   // Thêm bảo mật HTTP header
-const cors = require('cors');
-
 const corsOptions = {
   origin: (origin, callback) => {
     // Cho phép các request không có origin (như từ Postman hoặc các client không phải browser)
@@ -49,9 +47,6 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires', 'x-user-id'],
   credentials: true
 };
-
-// Áp dụng CORS middleware
-app.use(cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(morgan('combined'));
 app.use(express.json());
